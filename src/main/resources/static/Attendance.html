@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        .btn-group {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5 mb-4">Attendance</h1>
+        
+        <div class="btn-group">
+            <button id="checkinButton" class="btn btn-primary mr-2">Check-In</button>
+            <button id="checkoutButton" class="btn btn-primary mr-2">Check-Out</button>
+            <button id="fetchAttendanceButton" class="btn btn-primary mr-2">Fetch Attendance</button>
+            <button id="fetchAllUserAttendanceButton" class="btn btn-primary">Fetch All User Attendance</button>
+        </div>
+
+ 
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        function getCookie(name) {
+            let cookieArr = document.cookie.split(";");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookiePair = cookieArr[i].split("=");
+                if (name === cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+
+        function decodeJWT(token) {
+            try {
+                const payload = token.split('.')[1];
+                const decodedPayload = atob(payload);
+                return JSON.parse(decodedPayload);
+            } catch (e) {
+                console.error('Error decoding JWT token:', e);
+                return null;
+            }
+        }
+
+        function checkIn() {
+            let token = getCookie("jwt");
+
+            $.ajax({
+                url: 'http://localhost:8080/attendance/user/checkin',
+                type: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(response) {
+                    alert('Check-In successful!');
+                },
+                error: function(xhr, status, error) {
+                    alert('Already checked In ' + xhr.responseText);
+                }
+            });
+        }
+
+        function checkOut() {
+            let token = getCookie("jwt");
+
+            $.ajax({
+                url: 'http://localhost:8080/attendance/user/checkout',
+                type: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(response) {
+                    alert('Check-Out successful!');
+                },
+                error: function(xhr, status, error) {
+                    alert('Already checked out ' + xhr.responseText);
+                }
+            });
+        }
+
+        function fetchAttendance() {
+            window.location.href = 'AttDetails.html';
+        }
+
+        function fetchAllUserAttendance() {
+            window.location.href = 'AllUserDetails.html';
+        }
+
+        $(document).ready(function() {
+            let token = getCookie("jwt");
+            if (token) {
+                let decodedToken = decodeJWT(token);
+                if (decodedToken && decodedToken.userType === "USER") {
+                    $('#fetchAllUserAttendanceButton').hide();
+                }
+            }
+
+            $('#checkinButton').click(function() {
+                checkIn();
+            });
+
+            $('#checkoutButton').click(function() {
+                checkOut();
+            });
+
+            $('#fetchAttendanceButton').click(function() {
+                fetchAttendance();
+            });
+
+            $('#fetchAllUserAttendanceButton').click(function() {
+                fetchAllUserAttendance();
+            });
+        });
+    </script>
+</body>
+</html>

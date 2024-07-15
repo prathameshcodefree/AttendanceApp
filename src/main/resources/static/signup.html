@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Signup</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    
+    <style>
+        /* Custom styles can go here */
+        .form-container {
+            width: 300px;
+            margin: 50px auto;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            $('#signupForm').submit(function (event) {
+                event.preventDefault();
+
+                var signupData = {
+                    username: $('#username').val(),
+                    password: $('#password').val(),
+                    role: $('#role').val()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: 'http://localhost:8080/auth/signup',
+                    contentType: 'application/json',
+                    data: JSON.stringify(signupData),
+                    success: function (response) {
+                        console.log('Signup Successful');
+                        alert('Signup successful!');
+
+                        // Redirect to login page or any other page
+                        window.location.href = '/login.html';
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Signup Error:', error);
+                        alert('Signup failed. Please try again.');
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2 class="text-center mb-4">User Signup</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" class="form-control" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role:</label>
+                    <select class="form-control" id="role" name="role" required>
+                        <option value="USER">User</option>
+                        <option value="ADMIN">Admin</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Signup</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (optional for Bootstrap features) -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+</body>
+</html>

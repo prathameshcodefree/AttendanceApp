@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Attendance</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5 mb-4">User Attendance</h1>
+        
+        <div id="attendanceData">
+            <!-- Attendance data will be displayed here -->
+        </div>
+
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Function to get a cookie by name
+        function getCookie(name) {
+            let cookieArr = document.cookie.split(";");
+            for (let i = 0; i < cookieArr.length; i++) {
+                let cookiePair = cookieArr[i].split("=");
+                if (name === cookiePair[0].trim()) {
+                    return decodeURIComponent(cookiePair[1]);
+                }
+            }
+            return null;
+        }
+
+        $(document).ready(function() {
+            let token = getCookie("jwt");
+
+            if (!token) {
+                alert('No JWT token found in cookies.');
+                return;
+            }
+
+            // Decode JWT token to get userId
+            function getUserIdFromToken(token) {
+                try {
+                    let payload = token.split('.')[1];
+                    let decodedPayload = atob(payload);
+                    let parsedPayload = JSON.parse(decodedPayload);
+                    return parsedPayload.sub; // Assuming 'sub' field contains userId
+                } catch (e) {
+                    console.error('Error decoding JWT token:', e);
+                    return null;
+                }
+            }
+
+            let userId = getUserIdFromToken(token);
+
+            if (!userId) {
+                alert('Failed to get user ID from JWT token.');
+                return;
+            }
+
+            $.ajax({
+                url: 'http://localhost:8080/attendance/user?id=' + userId,
+                type: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(response) {
+                    console.log(response); // Log the response for debugging
+
+                    if (!Array.isArray(response)) {
+                        alert('Unexpected response format');
+                        return;
+                    }
+
+                    let attendanceData = response;
+
+                    // Construct HTML table
+                    let tableHTML = '<table class="table"><thead class="thead-dark"><tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Status</th></tr></thead><tbody>';
+
+                    attendanceData.forEach(function(data) {
+                        let date = data.date ? data.date : 'N/A';
+                        let clockInTime = data.clockInTime ? data.clockInTime : 'N/A';
+                        let clockOutTime = data.clockOutTime ? data.clockOutTime : 'N/A';
+                        let status = data.status ? data.status : 'N/A';
+
+                        tableHTML += '<tr>';
+                        tableHTML += '<td>' + date + '</td>';
+                        tableHTML += '<td>' + clockInTime + '</td>';
+                        tableHTML += '<td>' + clockOutTime + '</td>';
+                        tableHTML += '<td>' + status + '</td>';
+                        tableHTML += '</tr>';
+                    });
+
+                    tableHTML += '</tbody></table>';
+
+                    $('#attendanceData').html(tableHTML); // Display table in the HTML
+                },
+                error: function(xhr, status, error) {
+                    alert('Failed to fetch attendance data: ' + xhr.responseText);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
