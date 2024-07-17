@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.attendance.model.Attendance;
@@ -17,7 +18,10 @@ import com.attendance.model.User;
 import com.attendance.repository.AttendanceRepository;
 import com.attendance.repository.UserRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class AttendanceService {
 
 	@Autowired
@@ -25,33 +29,61 @@ public class AttendanceService {
 
 	@Autowired
 	UserRepository userRepository;
+	
+	@Autowired
+	UserService userService;
 
 	public void saveAttendance(Attendance attendance) {
 		attendanceRepository.save(attendance);
 	}
+	
+	
+	@Scheduled(cron = "0 0 6 * * *") 
+	public void markAbsentUsers() {
+	    LocalDateTime now = LocalDateTime.now();
+	    LocalDate today = LocalDate.now();
+	    LocalDateTime fiveMinutesAgo = now.minusMinutes(5);
 
-//	public Attendance findLastClockIn(Long userId) {
-//		List<Attendance> attendances = attendanceRepository.findByUserId(userId);
-//		return attendances.stream().filter(a -> a.getClockOutTime() == null).findFirst().orElse(null);
-//	}
+	    List<User> allUsers = userService.getAllUsers();
+	    // Implement userService.getAllUsers() as needed
+	    log.info("ALL user"+ allUsers);
+
+	    for (User user : allUsers) {
+	        Optional<Attendance> attendanceOpt = attendanceRepository.findByUserAndDate(user, today);
+
+	        if (!attendanceOpt.isPresent()) {
+	            // User has not checked in at all today
+	            Attendance absentAttendance = new Attendance();
+	            absentAttendance.setUser(user);
+	            absentAttendance.setDate(today);
+	            absentAttendance.setClockInTime(null);
+	            absentAttendance.setClockOutTime(null);
+	            absentAttendance.setStatus("ABSENT");
+	            attendanceRepository.save(absentAttendance);
+	        }
+	    }
+	}
+
+	
+
 
 	public void checkIn(User user) {
         LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
 
-        // Check if the user has already checked in today
+      
         Optional<Attendance> existingAttendance = attendanceRepository.findByUserAndDate(user, today);
 
         if (existingAttendance.isPresent()) {
             throw new IllegalStateException("User has already checked in today.");
         }
 
-        // Proceed with check-in if no existing record is found
+     
         Attendance attendance = new Attendance();
         attendance.setDate(today);
         attendance.setUser(user);
-        attendance.setClockInTime(currentTime);  // Store only the time component
+        attendance.setClockInTime(currentTime);  
         attendance.setStatus("PRESENT");
 
         attendanceRepository.save(attendance);
